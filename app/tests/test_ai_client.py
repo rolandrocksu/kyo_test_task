@@ -1,11 +1,11 @@
 import json
 import unittest
 from unittest.mock import MagicMock, patch
-from app.services.ai_client import AIClient
+from app.services.default_workflow.ai_client import AIClient
 
 class TestAIClient(unittest.TestCase):
     def setUp(self):
-        with patch("app.services.ai_client.OpenAI"):
+        with patch("app.services.default_workflow.ai_client.OpenAI"):
             self.ai_client = AIClient(model="test-model")
 
     def test_extract_leave_request_success(self):

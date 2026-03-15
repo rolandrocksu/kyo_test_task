@@ -1,14 +1,21 @@
 import time
 from typing import Set
 
-from app.services.ai_client import ai_client
+import os
+from app.services.email_service import email_service
+
+WORKFLOW_TYPE = os.getenv("WORKFLOW_TYPE", "default").lower()
+
+if WORKFLOW_TYPE == "langchain":
+    from app.services.langchain_workflow.ai_client import langchain_ai_client as ai_client
+    from app.services.langchain_workflow.workflow import process_leave_request
+else:
+    from app.services.default_workflow.ai_client import ai_client
+    from app.services.default_workflow.workflow import process_leave_request
+
+
 from app.db import SessionLocal, init_db
 from app.models.leave_request import LeaveRequest
-from app.services.email_service import email_service
-from app.services.workflow import process_leave_request
-
-
-POLL_INTERVAL_SECONDS = 5
 
 
 def _load_processed_ids() -> Set[str]:
