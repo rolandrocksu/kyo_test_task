@@ -54,9 +54,13 @@ def poll_loop() -> None:
 
                 print(f"New email from {basic['from']} with subject: {basic['subject']}")
 
+                # Fetch history for context
+                history = email_service.get_email_history(basic["from"])
+
                 parsed = ai_client.extract_leave_request(
                     email_subject=basic["subject"],
                     email_body=basic["body"],
+                    history=history,
                 )
                 print("Intent detected: leave_request")
                 print("Parsed payload:", parsed)

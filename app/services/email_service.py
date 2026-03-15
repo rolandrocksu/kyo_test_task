@@ -92,6 +92,12 @@ class EmailService:
         """
         self._render_and_send(employee_email, "leave_request_clarification")
 
+    def send_date_clarification_email(self, employee_email: str) -> None:
+        """
+        Send an email specifically asking for dates if other info is known.
+        """
+        self._render_and_send(employee_email, "leave_request_date_clarification")
+
     def send_approved_email(self, leave_request: Any) -> None:
         """
         Send an email to the employee notifying them their request was approved.
@@ -123,6 +129,36 @@ class EmailService:
         resp = requests.get(f"{self.mailhog_api_base}/messages", timeout=10)
         resp.raise_for_status()
         return resp.json()
+
+    def get_email_history(self, employee_email: str, limit: int = 5) -> List[str]:
+        """
+        Fetch the last few emails from/to this employee to provide context.
+        Returns a list of email bodies.
+        """
+        try:
+            payload = self.fetch_mailhog_messages()
+            items = payload.get("items", [])
+            history = []
+            employee_email_lower = employee_email.lower()
+            
+            for msg in items:
+                basic = self.extract_email_payload(msg)
+                # Check if email is from or to the employee
+                # (to_addr is not easily available in basic extract but we can check headers)
+                headers = msg.get("Content", {}).get("Headers", {})
+                to_headers = headers.get("To") or []
+                is_to_employee = any(employee_email_lower in t.lower() for t in to_headers)
+                
+                if basic["from"].lower() == employee_email_lower or is_to_employee:
+                    history.append(f"From: {basic['from']}\nSubject: {basic['subject']}\n\n{basic['body']}")
+                
+                if len(history) >= limit:
+                    break
+            
+            # Return reversed so it's oldest first for the LLM prompt
+            return list(reversed(history))
+        except Exception:
+            return []
 
     def extract_email_payload(self, message: Dict[str, Any]) -> Dict[str, str]:
         """

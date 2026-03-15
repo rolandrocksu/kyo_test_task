@@ -12,7 +12,7 @@ class AIClient:
         self.client = OpenAI()
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-5")
 
-    def extract_leave_request(self, email_subject: str, email_body: str) -> Dict[str, Any]:
+    def extract_leave_request(self, email_subject: str, email_body: str, history: list[str] = None) -> Dict[str, Any]:
         """
         Call OpenAI to extract structured leave-request data.
 
@@ -26,27 +26,33 @@ Rules:
 - Convert relative dates like "next Monday" or "tomorrow" to ISO 8601 (YYYY-MM-DD).
 - Only extract information present in the message. If missing or ambiguous, return null.
 - Do not invent leave_type; if not mentioned, return null.
+- Use previous conversation context if provided to fill in missing details.
 - Always follow the JSON schema strictly.
 """.strip()
 
+        history_context = ""
+        if history:
+            history_context = "\nPrevious email history (oldest first):\n" + "\n---\n".join(history) + "\n---\n"
+
         user_prompt = f"""
 Today is {date.today().isoformat()}.
-Email subject:
+{history_context}
+Current Email subject:
 {email_subject}
 
-Email body:
+Current Email body:
 {email_body}
 """.strip()
 
-        response = self.client.responses.create(
+        response = self.client.beta.chat.completions.parse(
             model=self.model,
-            input=[
+            messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            text={
-                "format": {
-                    "type": "json_schema",
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
                     "name": "leave_request",
                     "strict": True,
                     "schema": {
@@ -78,11 +84,11 @@ Email body:
             },
         )
 
-        content = response.output_text
+        content = response.choices[0].message.content
 
         try:
             return json.loads(content)
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, TypeError) as e:
             raise ValueError(f"Invalid JSON returned by model: {content}") from e
 
 

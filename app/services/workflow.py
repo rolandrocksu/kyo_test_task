@@ -59,11 +59,13 @@ def process_leave_request(
         start_date = _parse_date(start_date_str)
         end_date = _parse_date(end_date_str)
 
-        # Logic: need clarification if any key field is missing from AI extraction
-        needs_clarification = not (leave_type and start_date_str and end_date_str)
-
-        if needs_clarification or not leave_type or not start_date:
+        # Logic: need clarification if key field is missing from AI extraction
+        if not leave_type:
             email_service.send_clarification_email(employee_email)
+            return
+        
+        if not start_date_str or not start_date:
+            email_service.send_date_clarification_email(employee_email)
             return
 
         manager_email = _resolve_manager_email(department)
