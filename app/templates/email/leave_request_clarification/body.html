@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 20px; background-color: #f8fafc; }
+    .card { max-width: 550px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .accent-bar { height: 4px; background: #3b82f6; }
+    .content { padding: 32px; }
+    .header-icon { font-size: 24px; margin-bottom: 16px; }
+    h2 { color: #0f172a; margin: 0 0 16px 0; font-size: 22px; letter-spacing: -0.01em; }
+    p { margin: 0 0 16px 0; font-size: 15px; }
+
+    .info-needed-box {
+      background-color: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 20px;
+      border-radius: 4px;
+      margin: 24px 0;
+    }
+    .info-title {
+      display: block;
+      font-weight: 700;
+      color: #1e40af;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    .info-list { margin: 0; padding-left: 20px; color: #1e3a8a; }
+    .info-list li { margin-bottom: 8px; }
+
+    .reply-hint {
+      font-size: 14px;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .footer { padding: 24px; text-align: left; border-top: 1px solid #f1f5f9; }
+    .signature { font-size: 14px; color: #475569; }
+    .brand { color: #3b82f6; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="accent-bar"></div>
+    <div class="content">
+      <div class="header-icon">✉️</div>
+      <h2>Action Required: Leave Request</h2>
+      <p>Hi there,</p>
+      <p>We've received your leave request! To ensure everything is processed accurately in our system, we just need a few more specifics from you.</p>
+
+      <div class="info-needed-box">
+        <span class="info-title">Required Details</span>
+        <ul class="info-list">
+          <li><strong>Leave Category:</strong> Please specify if this is PTO, Vacation, Sick, or Unpaid leave.</li>
+          <li><strong>Exact Timeline:</strong> Please confirm both the start and end dates.</li>
+        </ul>
+      </div>
+
+      <p class="reply-hint">
+        <strong>How to update:</strong> Simply hit <strong>Reply</strong> to this email with the details above.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p class="signature">
+        Best regards,<br>
+        <span class="brand">HR AI Assistant</span>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

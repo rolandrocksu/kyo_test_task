@@ -1,0 +1,17 @@
+A new leave request needs your approval.
+
+Employee: {{ employee_email }}
+Type: {{ leave_type }}
+Dates: {{ start_date }} to {{ end_date }}
+
+Approve: {{ approve_link }}
+Decline: {{ reject_link }}
+
+{% if meetings %}
+Conflicting Meetings:
+{% for meeting in meetings %}
+- {{ meeting.summary }} ({{ meeting.start }} to {{ meeting.end }})
+{% endfor %}
+{% else %}
+No conflicting meetings.
+{% endif %}

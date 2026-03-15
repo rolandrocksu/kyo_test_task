@@ -1,0 +1,17 @@
+<html>
+    <body>
+        <script>
+            {% if auto_close %}
+            setTimeout(function() {
+                window.close();
+            }, {{ close_delay or 1000 }});
+            {% else %}
+            window.close();
+            {% endif %}
+        </script>
+        <p>{{ message }}</p>
+        {% if not auto_close %}
+        <p>If the tab does not close automatically, you can close it manually.</p>
+        {% endif %}
+    </body>
+</html>

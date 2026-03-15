@@ -1,0 +1,11 @@
+Hi,
+
+Your leave request was reviewed but unfortunately was not approved.
+
+Type: {{ leave_type }}
+Dates: {{ start_date }} to {{ end_date }}
+
+If you have questions, please contact HR.
+
+Thanks,
+HR AI Assistant

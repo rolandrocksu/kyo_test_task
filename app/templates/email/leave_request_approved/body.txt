@@ -1,0 +1,9 @@
+Hi,
+
+Good news – your leave request was approved.
+
+Type: {{ leave_type }}
+Dates: {{ start_date }} to {{ end_date }}
+
+Thanks,
+HR AI Assistant
