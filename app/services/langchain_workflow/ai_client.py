@@ -1,56 +1,98 @@
-from typing import Any, Dict, List, Optional
-from datetime import date
-from pydantic import BaseModel, Field
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-import os
+"""
+Langchain-based AI client that runs a tool-calling agent.
 
-class LeaveRequestSchema(BaseModel):
-    leave_type: Optional[str] = Field(
-        None, 
-        description="Type of leave (pto, vacation, sick, unpaid, other)",
-        enum=["pto", "vacation", "sick", "unpaid", "other", None]
-    )
-    start_date: Optional[str] = Field(None, description="Start date in ISO 8601 format (YYYY-MM-DD)")
-    end_date: Optional[str] = Field(None, description="End date in ISO 8601 format (YYYY-MM-DD)")
-    department: Optional[str] = Field(None, description="Employee department")
+The agent receives the employee's email in its system context so it can
+use the bound tools (calendar checks, leave submission, recommendations)
+without needing to know how to call the underlying APIs directly.
+"""
+from __future__ import annotations
+
+import os
+from datetime import date
+from typing import List
+
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+
+from app.services.langchain_workflow.agent_tools import build_tools
+
+
+SYSTEM_PROMPT = """\
+You are Kyo, an AI HR assistant that helps employees manage their leave requests.
+
+Today is {today}. You are helping: {employee_email}.
+
+You have access to tools that let you:
+- Check the employee's calendar for upcoming meetings.
+- List all their current leave requests.
+- Submit a new leave request on their behalf.
+- Recommend the best days off based on their schedule.
+
+Guidelines:
+- Always be friendly, concise, and professional.
+- Before submitting a leave request, confirm you have the leave type, start and end dates.
+  If any are missing or unclear, ask for clarification in your reply — do NOT call submit_leave_request.
+- When asked about the best time to take a day off, use recommend_best_days_off.
+- When you submit a request, confirm back with the details (type, dates, and that it's pending manager approval).
+- For anything unrelated to leave management, politely state that you can only help with leave requests.
+- Respond in a clear, plain-text format suitable for an email reply. Do NOT use markdown.
+""".strip()
+
 
 class LangChainAIClient:
     def __init__(self, model: str = None):
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o")
         self.llm = ChatOpenAI(model=self.model, temperature=0)
-        self.structured_llm = self.llm.with_structured_output(LeaveRequestSchema)
 
-    def extract_leave_request(self, email_subject: str, email_body: str, history: List[str] = None) -> Dict[str, Any]:
-        system_prompt = """
-You are an assistant that extracts structured leave requests from employee messages.
-
-Rules:
-- Extract leave_type, start_date, end_date, and department.
-- Convert relative dates like "next Monday" or "tomorrow" to ISO 8601 (YYYY-MM-DD).
-- Only extract information present in the message. If missing or ambiguous, return null.
-- Do not invent leave_type; if not mentioned, return null.
-- Use previous conversation context if provided to fill in missing details.
-""".strip()
-
-        history_context = ""
-        if history:
-            history_context = "\nPrevious email history (oldest first):\n" + "\n---\n".join(history) + "\n---\n"
+    def run_agent(
+        self,
+        employee_email: str,
+        email_subject: str,
+        email_body: str,
+        history: List[str] = None,
+    ) -> str:
+        """
+        Run the agent for a given employee email interaction.
+        Returns the agent's final text response to send back to the employee.
+        """
+        tools = build_tools(employee_email)
 
         prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("user", "Today is {today}.\n{history}\nCurrent Email subject:\n{subject}\n\nCurrent Email body:\n{body}")
+            ("system", SYSTEM_PROMPT),
+            ("user", "{history}Current email subject: {subject}\n\nEmail body:\n{body}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
 
-        chain = prompt | self.structured_llm
-        
-        result = chain.invoke({
+        agent = create_openai_tools_agent(self.llm, tools, prompt)
+        executor = AgentExecutor(agent=agent, tools=tools, verbose=True, max_iterations=8)
+
+        history_text = ""
+        if history:
+            history_text = (
+                "Previous email conversation (oldest first):\n"
+                + "\n---\n".join(history)
+                + "\n---\n\n"
+            )
+
+        result = executor.invoke({
             "today": date.today().isoformat(),
-            "history": history_context,
+            "employee_email": employee_email,
+            "history": history_text,
             "subject": email_subject,
-            "body": email_body
+            "body": email_body,
         })
-        
-        return result.model_dump()
+
+        return result.get("output", "Sorry, I was unable to process your request.")
+
+    # ------------------------------------------------------------------
+    # Kept for backward-compatibility with tests / default_workflow references
+    # ------------------------------------------------------------------
+    def extract_leave_request(self, email_subject: str, email_body: str, history: List[str] = None):
+        """Deprecated: use run_agent instead."""
+        raise NotImplementedError(
+            "extract_leave_request is not used in the agent workflow. Use run_agent()."
+        )
+
 
 langchain_ai_client = LangChainAIClient()

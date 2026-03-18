@@ -5,6 +5,7 @@ from alembic import command
 from app.core.config import APP_NAME
 from app.db import init_db
 from app.routers import dashboard as dashboard_router
+from app.routers import google_auth as google_auth_router
 
 
 app = FastAPI(title=APP_NAME)
@@ -20,4 +21,4 @@ def on_startup() -> None:
 
 
 app.include_router(dashboard_router.router)
-
+app.include_router(google_auth_router.router)
