@@ -151,6 +151,31 @@ class TestLangChainAIClient(unittest.TestCase):
         call_payload = mock_executor.invoke.call_args[0][0]
         self.assertEqual(call_payload["history"], "")
 
+    @patch("app.services.langchain_workflow.ai_client.AgentExecutor")
+    @patch("app.services.langchain_workflow.ai_client.create_openai_tools_agent")
+    @patch("app.services.langchain_workflow.ai_client.build_tools")
+    def test_run_agent_passes_verbose_today_format(
+        self, mock_build_tools, mock_create_agent, mock_executor_cls
+    ):
+        """The 'today' value passed to executor.invoke should include the day of the week."""
+        mock_build_tools.return_value = []
+        mock_create_agent.return_value = MagicMock()
+
+        mock_executor = MagicMock()
+        mock_executor.invoke.return_value = {"output": "ok"}
+        mock_executor_cls.return_value = mock_executor
+
+        self.client.run_agent(
+            employee_email="alice@example.com",
+            email_subject="New request",
+            email_body="I need a day off.",
+        )
+
+        call_payload = mock_executor.invoke.call_args[0][0]
+        today_val = call_payload["today"]
+        # Expected format: "Thursday, 2026-03-19"
+        self.assertRegex(today_val, r"\w+, \d{4}-\d{2}-\d{2}")
+
     # ------------------------------------------------------------------
     # extract_leave_request — deprecated guard
     # ------------------------------------------------------------------

@@ -59,7 +59,9 @@ def build_tools(employee_email: str):
     def check_calendar(start_date: str, end_date: str) -> str:
         """
         Check the employee's Google Calendar (or mock data) for meetings
-        between start_date and end_date (both in YYYY-MM-DD format).
+        between start_date and end_date (both MUST be absolute date strings in YYYY-MM-DD format).
+        If the user uses relative dates (like 'tomorrow' or 'next Monday'), you MUST resolve them
+        to absolute dates before calling this tool.
         Returns a summary of scheduled events.
         """
         sd = _parse_date(start_date)
@@ -107,7 +109,9 @@ def build_tools(employee_email: str):
         """
         Submit a new leave request for the employee.
         leave_type must be one of: pto, vacation, sick, unpaid, other.
-        start_date and end_date must be in YYYY-MM-DD format.
+        start_date and end_date MUST be absolute date strings in YYYY-MM-DD format.
+        If the user uses relative dates (like 'tomorrow' or 'next week'), you MUST resolve them
+        to absolute dates before calling this tool.
         Returns a confirmation message or an error.
         """
         sd = _parse_date(start_date)

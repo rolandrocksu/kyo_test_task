@@ -21,7 +21,7 @@ from app.services.langchain_workflow.agent_tools import build_tools
 SYSTEM_PROMPT = """\
 You are Kyo, an AI HR assistant that helps employees manage their leave requests.
 
-Today is {today}. You are helping: {employee_email}.
+Today is {today}.
 
 You have access to tools that let you:
 - Check the employee's calendar for upcoming meetings.
@@ -76,8 +76,7 @@ class LangChainAIClient:
             )
 
         result = executor.invoke({
-            "today": date.today().isoformat(),
-            "employee_email": employee_email,
+            "today": date.today().strftime("%A, %Y-%m-%d"),
             "history": history_text,
             "subject": email_subject,
             "body": email_body,
